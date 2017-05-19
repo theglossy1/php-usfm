@@ -1,0 +1,62 @@
+body {
+ font-family: "Milo Serif Offc", Georgia, Cambria, Serif;
+ line-height:1.4;
+}
+
+.usfm-v b , span.usfm-f1 {
+ position: relative;
+ top: -0.4em;
+ font-size: .7em;
+ font-weight: normal;
+ color:blue
+}
+
+.usfm-f2:after {
+ content: " ";
+}
+
+.usfm-c {
+  float: left;
+  font-size: 2.5em;
+  font-weight: bold;
+  padding: 0 8px 0 3px;
+  margin: 0 0 0 0;
+  line-height:1em;
+}
+
+p.usfm-hanging {
+ margin-bottom:0; margin-top:0; *
+}
+
+blockquote.usfm {
+ margin-top:0
+}
+
+span.popup {
+ display:none;
+}
+
+span.popup_marker:hover span.popup {
+    display:inline;
+    left: 20%;
+    padding: 5px 15px;
+    position: absolute;
+    z-index: 98;
+    background-color:#f1fffa;
+    border:2px dotted;
+    margin-top:20px;
+}
+
+span.wj {
+ color:red;
+ font-weight:bold;
+}
+
+p.usfm-footer {
+ margin-top:0;
+ margin-bottom:0;
+}
+
+hr {
+ margin-top:1em;
+}
