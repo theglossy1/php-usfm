@@ -120,12 +120,12 @@ function switchListLevel($new_list_level) {
   
   //115
   function isOpen() {
-    return $this->is_open;
+  	return $this->is_open;
   }
   
   //119
   function getParagraphClass() {
-    return $this->paragraph_class;
+  	return $this->paragraph_class;
   }
 }
 /**
@@ -538,10 +538,12 @@ class UsfmText {
      return $letter;
     }
 
-    function newFooterEntry() {
+    //1-14-15 added popup window for footnote
+    function newFooterEntry($footnote_style) {
         $this->is_in_footer_mode = true;
         $anchor_label            = $this->newAnchorLabel();
-       	if (! defined('FOOTNOTE_STYLE'))
+       	//$foot_letter = $this->numToLetter($anchor_label);
+       	if ($footnote_style == "letters")
          $foot_marker = $this->numToLetter($anchor_label);
         else
          $foot_marker = $anchor_label;
@@ -808,7 +810,7 @@ class UsfmTagDecoder {
         //$this->usfm_text = new UsfmText($parser);
     }
 
-    public function decode($raw_text) {
+    public function decode($raw_text,$footnote_style="letters") {
 
         $usfm_segments = explode("\\", $raw_text);
 
@@ -1086,7 +1088,7 @@ class UsfmTagDecoder {
                 }
                 else {
                     $this->is_selah_cross_reference = false;
-                    $this->usfm_text->newFooterEntry();
+                    $this->usfm_text->newFooterEntry($footnote_style);
                     $this->usfm_text->printHtmlText($remaining);
                 }
                 break;

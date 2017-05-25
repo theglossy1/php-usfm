@@ -14,8 +14,9 @@ $tagDecode = new UsfmTagDecoder();
 <link rel="stylesheet" type="text/css" href="usfm.css"/>
 </head>
 <body>
-<?php
-#define('FOOTNOTE_STYLE',1);
-echo $tagDecode->decode($sfm); ?>
+<?php 
+$tagDecode("letters");
+echo $tagDecode->decode($sfm,"letters");
+?>
 </body>
 </html>
