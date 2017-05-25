@@ -962,7 +962,7 @@ class UsfmTagDecoder {
             }
         }
 
-        if (function_exists(normalizer_normalize))
+        if (function_exists("normalizer_normalize"))
          return normalizer_normalize($this->usfm_text->getAndClearHtmlText());
         else
          return $this->usfm_text->getAndClearHtmlText();
