@@ -54,7 +54,7 @@ function switchListLevel($new_list_level) {
 
       $result .= $this->switchListLevel(0); 
       if ($this->is_italic) {
-        $result .= '</i>';
+        $result .= '</span>';
         $this->is_italic = False;
       }  
       $result .= "</p>\n";
@@ -89,7 +89,7 @@ function switchListLevel($new_list_level) {
     $result .= "<p class='".$paragraph_class."'>";
     if ($is_italic) {
       $this->is_italic = True;
-      $result .= '<i>';
+      $result .= '<span>';
     }
     $this->paragraph_class = $paragraph_class;
     $this->is_open = True;
@@ -189,6 +189,7 @@ class UsfmBodyOrFooter {
     }
 
     function getAndClearHtmlText() {
+        $this->html_text .= $html_text;
         $result          = $this->html_text;
         $this->html_text = '';
         return $result;
@@ -447,7 +448,7 @@ class UsfmText {
             }
             $this->body->printHtmlText(
                 " <span class='usfm-v'><b class='usfm'>" .
-                "<a id='" . $this->latest_chapter_number . "_" .
+                "<a class='" . $this->latest_chapter_number . "_" .
                 $anchor_verse . "'></a>" . $verse_label .
                 "</b></span>"
             );
@@ -540,11 +541,11 @@ class UsfmText {
 
     function newFooterEntry() {
         $this->is_in_footer_mode = true;
-        $anchor_label            = $this->newAnchorLabel();
-       	if (! defined('FOOTNOTE_STYLE'))
-         $foot_marker = $this->numToLetter($anchor_label);
-        else
+        $anchor_label = $this->newAnchorLabel();
+       	if (defined('FOOTNOTE_STYLE') && FOOTNOTE_STYLE > 0)
          $foot_marker = $anchor_label;
+        else
+         $foot_marker = $this->numToLetter($anchor_label);
 
         $this->printHtmlTextToBody(
             '<span class="popup_marker"><span class="usfm-f1">' .
@@ -552,7 +553,6 @@ class UsfmText {
             '</span><span class="popup">'
         );
 
-        /** @noinspection HtmlUnknownAnchorTarget */
         $this->printHtmlTextToFooter(
             '<p class="usfm-footer"><span class="usfm-f2">' .
             '[<a id="' . $anchor_label . '" href="#' . $anchor_label . '*">'.$foot_marker.'</a>] ' .
@@ -560,17 +560,9 @@ class UsfmText {
         );
     }
 
-    //yil this function originally generates letter footnote labels.
-    //It's changed to number so that international users can have an easier time to read it.
     private function newAnchorLabel() {
         $count        = ++$this->anchor_count;
-        $anchor_label = strval(($count + 1)); //generating footnote number starting at 1 instead of 0
-        /* yil original letter generating label code
-        $anchor_label = '';
-        do {
-          $anchor_label = chr(ord('a') + ($count % 26)) . $anchor_label;
-          $count = (int) floor($count / 26);
-        } while ($count > 0);*/
+        $anchor_label = strval(($count + 1));
         return $anchor_label;
     }
 
@@ -585,18 +577,11 @@ class UsfmText {
     function getAndClearHtmlText() {
 
         $this->printHtmlTextToBody('');
-        /*
-        return "<link rel='stylesheet' href='lib".DIRECTORY_SEPARATOR."plugins".DIRECTORY_SEPARATOR.
-                                          "usfmtag".DIRECTORY_SEPARATOR."style.css'".
-             " type='text/css'>".
-             $this->body->getAndClearHtmlText().
-         $this->paragraph_state
-              ->printTitle(True, 4, False, "").
-         $this->footer->getAndClearHtmlText();*/
 
         return $this->body->getAndClearHtmlText() .
         $this->paragraph_state
             ->printTitle(true, 4, false, "") .
+        #$this->footer->printHtmlText();
         $this->footer->getAndClearHtmlText();
     }
 
@@ -610,60 +595,6 @@ class UsfmText {
 
 }
 
-/**
- * 10/6/14 Yvonne Lu
- * Correct indent problem in poetry
- *
- * 8/13/14 Yvonne Lu
- * Implemented /ip as paragraph
- * Implemented /is and /imt as section headings
- *
- * 8/6/14 Yvonne Lu
- * translate \s5 to <hr>
- *
- * Fixed space before punctuation problem for add tags
- *
- * 7/25/14
- * Disabled formatting for \add tags <jesse@distantshores.org>
- *
- *
- * 6/28/14
- * Corrected a bug concerning command parsing.  Punctuation was parsed with the
- * command which caused invalid rendering behavior.  I've noticed that many of the
- * php string functions utilized in the original code are single byte functions.
- * This may cause a problem when the string is in unicode that requires double
- * byte operation. Also, preg_match and ereg_match both hangs my version of
- * dokuwiki.  As a result, I was not able to use these functions.
- *
- *
- * 1/30/14
- * ported function renderOther, renderTable, renderIntroduction to support command
- * 'i', 'it', 'd', 'r', 't', 'tl','x'
- *
- *
- * There seems to be a bug in function renderChapterOrVerse for setting
- * alternate verse number and chapter.  It was using an uninitialized variable,
- * verse number.  I commented out the action for now.
- *
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- */
 class UsfmTagDecoder {
     private $usfm_text;
     private $is_selah_cross_reference = false;
@@ -717,25 +648,25 @@ class UsfmTagDecoder {
     const IF_ITALIC_PARAGRAPH = 1;
     private $substitution_table = array(
         // Titles, Headings, and Labels
-        "rq"    => array("\n<span class='usfm-selah'><i class='usfm'>"),
-        "rq*"   => array("</i></span>\n"),
+        "rq"    => array("\n<span class='usfm-selah'><span class='usfm'>"),
+        "rq*"   => array("</span></span>\n"),
         // Paragraphs and Poetry
         "b"     => array("\n<br>"),
         "qac"   => array("<span style='font-size: larger;'  class='usfm-qac'>"),
         "qac*"  => array("</span>"),
-        "qs"    => array("\n<span class='usfm-selah'><i class='usfm'>"),
-        "qs*"   => array("</i></span>\n"),
+        "qs"    => array("\n<span class='usfm-selah'><span class='usfm'>"),
+        "qs*"   => array("</span></span>\n"),
         // Cross Reference
         "x"     => array("\n<span class='usfm-selah'>"),
         "x*"    => array("</span>\n"),
         // Other
         // 7-25-14 disabled formatting for \add tags <jesse@distantshores.org>
-        //"add"  => array ("<i class='usfm'>[", "</i>["),
-        //"add*" => array ("]</i>", "]<i class='usfm'>"),
+        //"add"  => array ("<span class='usfm'>[", "</span>["),
+        //"add*" => array ("]</span>", "]<span class='usfm'>"),
         "add"   => array(" "),
         "add*"  => array(""),
-        "bk"    => array("<i class='usfm'>&quot;", "</i>&quot;"),
-        "bk*"   => array("&quot;</i>", "&quot;<i class='usfm'>"),
+        "bk"    => array("<span class='usfm'>&quot;", "</span>&quot;"),
+        "bk*"   => array("&quot;</span>", "&quot;<span class='usfm'>"),
         "dc"    => array("<code class='usfm'>"),
         "dc*"   => array("</code>"),
         "k"     => array("<code class='usfm'>"),
@@ -745,27 +676,29 @@ class UsfmTagDecoder {
         "ord"   => array("<sup class='usfm'>"),
         "ord*"  => array("</sup>"),
         "pn*"   => array(""),
-        "qt"    => array("<i class='usfm'>", "</i>"),
-        "qt*"   => array("</i>", "<i class='usfm'>"),
+        "qt"    => array("<span class='usfm'>", "</span>"),
+        "qt*"   => array("</span>", "<span class='usfm'>"),
         "s5"    => array("<hr>"), //Yvonne added 8/6/14
-        "sig"   => array("<i class='usfm'>", "</i>"),
-        "sig*"  => array("</i>", "<i class='usfm'>"),
-        "sls"   => array("<i class='usfm'>", "</i>"),
-        "sls*"  => array("</i>", "<i class='usfm'>"),
-        "tl"    => array("<i class='usfm'>", "</i>"),
-        "tl*"   => array("</i>", "<i class='usfm'>"),
+        "sig"   => array("<span class='usfm'>", "</span>"),
+        "sig*"  => array("</span>", "<span class='usfm'>"),
+        "sls"   => array("<span class='usfm'>", "</span>"),
+        "sls*"  => array("</span>", "<span class='usfm'>"),
+        "tl"    => array("<span class='usfm tl'>", "</span>"),
+        "tl*"   => array("</span>", "<span class='usfm'>"),
+        "wh"    => array("<span class='usfm wh'>", "</span>"),
+        "wh*"   => array("</span>", "<span class='usfm'>"),
         "wj"    => array("<span class='wj'>"),  //Matt changed 3/3/17
         "wj*"   => array("</span>"),
-        "em"    => array("<i class='usfm'>", "</i>"),
-        "em*"   => array("</i>", "<i class='usfm'>"),
+        "em"    => array("<span class='usfm'>", "</span>"),
+        "em*"   => array("</span>", "<span class='usfm'>"),
         "bd"    => array("<b class='usfm'>"),
         "bd*"   => array("</b>"),
-        "it"    => array("<i class='usfm'>", "</i>"),
-        "it*"   => array("</i>", "<i class='usfm'>"),
-        "bdit"  => array("<i class='usfm'><b class='usfm'>", "</i></b>"),
-        "bdit*" => array("</b></i>", "<b class='usfm'><i class='usfm'>"),
-        "no"    => array("", "</i>"),
-        "no*"   => array("", "<i class='usfm'>"),
+        "it"    => array("<span class='usfm'>", "</span>"),
+        "it*"   => array("</span>", "<span class='usfm'>"),
+        "bdit"  => array("<span class='usfm'><b class='usfm'>", "</span></b>"),
+        "bdit*" => array("</b></span>", "<b class='usfm'><span class='usfm'>"),
+        "no"    => array("", "</span>"),
+        "no*"   => array("", "<span class='usfm'>"),
         "sc"    => array("<small class='usfm'>"),
         "sc*"   => array("</small>"),
         "\\"    => array("<br>"),
@@ -777,14 +710,14 @@ class UsfmTagDecoder {
 
     private $footnote_substitution_table = array(
         // Footnotes
-        "fdc"  => array("<i class='usfm'>", ""),
-        "fdc*" => array("</i>", ""),
+        "fdc"  => array("<span class='usfm'>", ""),
+        "fdc*" => array("</span>", ""),
         "fl"   => array("<span style='text-decoration: underline;' class='usfm'>", "</span>"),
         "fm"   => array("<code class='usfm'>", ""),
         "fm*"  => array("</code>", ""),
         "fp"   => array("</p>\n<p class='usfm-footer'>", ""),
-        "fq"   => array("<i class='usfm'>", "</i>"),
-        "fqa"  => array("<i class='usfm'>", "</i>"),
+        "fq"   => array("<span class='usfm'>", "</span>"),
+        "fqa"  => array("<span class='usfm'>", "</span>"),
         "fr"   => array("<b class='usfm'>", "</b>"),
         "fv"   => array(" <span class='usfm-v'>", "</span>"),
         // Cross References
@@ -795,7 +728,7 @@ class UsfmTagDecoder {
         "xot"  => array("<b class='usfm'>", ""),
         "xot*" => array("</b>", ""),
         "xo"   => array("<b class='usfm'>", "</b>"),
-        "xq"   => array("<i class='usfm'>", "</i>")
+        "xq"   => array("<span class='usfm'>", "</span>")
     );
 
     const MAX_SELAH_CROSS_REFERENCES_LENGTH = 10;
@@ -1104,7 +1037,6 @@ class UsfmTagDecoder {
             case 'fk':
             case 'xk':
                 //$this->usfm_text
-                //     ->printHtmlTextToFooter(netscapeCapitalize($remaining));
                 $this->usfm_text
                     ->printHtmlText(netscapeCapitalize($remaining));
                 break;
@@ -1117,7 +1049,6 @@ class UsfmTagDecoder {
                     $remaining = $setting[self::BEFORE_REMAINING] . $remaining .
                         $setting[self::AFTER_REMAINING];
                 }
-                //$this->usfm_text->printHtmlTextToFooter($remaining);
                 $this->usfm_text->printHtmlText($remaining);
         }
     }
